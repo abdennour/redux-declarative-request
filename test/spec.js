@@ -11,12 +11,9 @@ import {
   handleResponse,
   request,
   declarativeRequest
-} from '../src';
+} from '../lib';
 
-const fakedAgent = {
-  get: (url, params) =>
-    Promise[Date.now() % 2 ? 'resolve' : 'reject'](generateString())
-};
+
 //  Builder of faked promises according to response code.
 function getHttpPromise(responseCode) {
   const promise = {};
