@@ -1,3 +1,4 @@
+const url = require('url');
 const Errors = require('./errors');
 
 exports.isLiteralObject = function(x) {
@@ -15,7 +16,7 @@ exports.isRequest = function(action, settings) {
 };
 
 exports.getUrl = function(action, baseUrl) {
-  return action.url ? action.url : `${baseUrl}${action.uri}`;
+  return action.url ? action.url :  url.resolve(baseUrl, action.uri);
 };
 /**
  * if action={method:'post',...,'200': foo, '404|405': bar}

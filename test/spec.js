@@ -82,4 +82,21 @@ describe(`redux-declarative-request`, () => {
       }).toThrow();
     });
   });
+
+   describe('getUrl', () => {
+     let action, baseUrl;
+     beforeEach(() => {
+       action = { type: generateString() };
+       baseUrl= `https://${generateString()}`
+     });
+     it('builds a full url from "uri" (in action) and "baseUrl"', () => {
+        action.uri = 'hi';
+        baseUrl = 'http://ho.co';
+        expect(getUrl(action, baseUrl)).toEqual('http://ho.co/hi');
+      });
+     it('does not build anything if the "url" is already given ', () => {
+       action.url = `ftp://${generateString()}/${generateString()}`;
+       expect(getUrl(action)).toEqual(action.url);
+     })
+   })
 });
