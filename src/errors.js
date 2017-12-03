@@ -1,5 +1,6 @@
 // TODO each message should be link
-exports.MISSING_BASE_URL = `
+export const MISSING_BASE_URL = 'MISSING_BASE_URL';
+/*`
  "baseUrl" is required when using "uri" in the action.
  Specify "baseUrl" when configuring the middleware.
 i.e:
@@ -8,9 +9,11 @@ i.e:
        declarativeRequest({
         baseUrl: 'http://your-base.url/is/here'
       });
-`;
+`;*/
 
-exports.MISSING_REQUEST_BUILDER = `
+export const MISSING_REQUEST_BUILDER = 'MISSING_REQUEST_BUILDER';
+
+/*`
  Request builder function ("buildRequest") is required.
  You are trying to use redux-declarative-request without declaring "buildRequest".
  .i.e:
@@ -26,3 +29,4 @@ exports.MISSING_REQUEST_BUILDER = `
       }
     });
 `
+*/
