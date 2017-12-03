@@ -150,11 +150,12 @@ describe(`redux-declarative-request`, () => {
         '200': sinon.stub().returns(action200),
         '404': sinon.stub().returns(action200),
         '301': sinon.stub().returns(action301),
-        '301|500': sinon.stub().returns(action301_or_500)
+        '301|500': sinon.stub().returns(action301_or_500),
+        '406': sinon.stub().returns(undefined)
       };
     });
 
-    it('calls handler that its key matches the response code', () => {
+    it('executes handler that its key matches the response code', () => {
       responseCode = 200;
       getAggregatedAction(action, response, responseCode);
       expect(action['200'].callCount).toEqual(1);
@@ -162,6 +163,11 @@ describe(`redux-declarative-request`, () => {
       getAggregatedAction(action, response, responseCode);
       expect(action['301'].callCount).toEqual(1);
       expect(action['301|500'].callCount).toEqual(1);
+    });
+    it('executes handler even if it does not return literal object', () => {
+      responseCode = 406;
+      getAggregatedAction(action, response, responseCode);
+      expect(action['406'].callCount).toEqual(1);
     });
 
     it('returns a literal object', () => {
