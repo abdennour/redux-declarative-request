@@ -17,7 +17,7 @@ module.exports = {
     // Needed to direct the sample to the local version of the datepicker, this is not needed for
     // normal setup.
     alias: {
-      'redux-declarative-api': path.resolve('./src/index.js')
+      'redux-declarative-request': path.resolve('./src/index.js')
     }
   },
   module: {
