@@ -186,7 +186,7 @@ describe(`redux-declarative-request`, () => {
     });
   });
 
-  describe('handleResponse', () => {
+  describe('Request/Response', () => {
     let action,
       response,
       responseCode,
@@ -197,7 +197,7 @@ describe(`redux-declarative-request`, () => {
       onReceiveResponse,
       onCompleteHandleResponse;
     beforeEach(() => {
-      buildRequestPromise = sinon.spy();
+      buildRequestPromise = sinon.stub().returns(Promise.resolve({}));
       onBeforeRequest = sinon.spy();
       onReceiveResponse = sinon.spy();
       onCompleteHandleResponse = sinon.spy();
@@ -214,44 +214,72 @@ describe(`redux-declarative-request`, () => {
       };
     });
 
-    it('is two-levels carried out function', () => {
-      const returnLevel1 = handleResponse(
-        action,
-        response,
-        responseCode,
-        hasError
-      );
-      expect(returnLevel1).toBeA(Function);
-      const returnLevel2 = returnLevel1(settings);
-      expect(returnLevel2).toBeA(Function);
-    });
+    describe('handleResponse', () => {
+      it('is two-levels carried out function', () => {
+        const returnLevel1 = handleResponse(
+          action,
+          response,
+          responseCode,
+          hasError
+        );
+        expect(returnLevel1).toBeA(Function);
+        const returnLevel2 = returnLevel1(settings);
+        expect(returnLevel2).toBeA(Function);
+      });
 
-    it('dispatches the aggregated/final action', () => {
-      delete settings.onReceiveResponse; // to make sure that "dispatch" is called only for this case
-      delete settings.onCompleteHandleResponse; // same as above
-      handleResponse(action, response, responseCode, hasError)(settings)(
-        dispatch
-      );
-      expect(dispatch.callCount).toEqual(1);
-      const dispatchFirstArg = dispatch.getCall(0).args[0];
-      expect(dispatchFirstArg).toBeAn(Object);
-      expect(dispatchFirstArg.type).toEqual(action.type);
-      expect(dispatchFirstArg.hasError).toEqual(hasError);
-      expect(dispatchFirstArg.responseCode).toEqual(responseCode);
-    });
+      it('dispatches the aggregated/final action', () => {
+        delete settings.onReceiveResponse; // to make sure that "dispatch" is called only for this case
+        delete settings.onCompleteHandleResponse; // same as above
+        handleResponse(action, response, responseCode, hasError)(settings)(
+          dispatch
+        );
+        expect(dispatch.callCount).toEqual(1);
+        const dispatchFirstArg = dispatch.getCall(0).args[0];
+        expect(dispatchFirstArg).toBeAn(Object);
+        expect(dispatchFirstArg.type).toEqual(action.type);
+        expect(dispatchFirstArg.hasError).toEqual(hasError);
+        expect(dispatchFirstArg.responseCode).toEqual(responseCode);
+      });
 
-    it('calls "onReceiveResponse" callback if it is given as middleware settings', () => {
-      handleResponse(action, response, responseCode, hasError)(settings)(
-        dispatch
-      );
-      expect(onReceiveResponse.callCount).toEqual(1);
-    });
+      it('calls "onReceiveResponse" callback if it is given as middleware settings', () => {
+        handleResponse(action, response, responseCode, hasError)(settings)(
+          dispatch
+        );
+        expect(onReceiveResponse.callCount).toEqual(1);
+      });
 
-    it('calls "onCompleteHandleResponse" callback if it is given as middleware settings', () => {
-      handleResponse(action, response, responseCode, hasError)(settings)(
-        dispatch
-      );
-      expect(onCompleteHandleResponse.callCount).toEqual(1);
+      it('calls "onCompleteHandleResponse" callback if it is given as middleware settings', () => {
+        handleResponse(action, response, responseCode, hasError)(settings)(
+          dispatch
+        );
+        expect(onCompleteHandleResponse.callCount).toEqual(1);
+      });
+    });
+    describe('request', () => {
+      it('is a carried out function', () => {
+        expect(request).toBeA(Function);
+        expect(request(action, settings)).toBeA(Function);
+      });
+
+      it('executes "buildRequestPromise" with passing url and method params as first argument', () => {
+        request(action, settings)(dispatch);
+        expect(buildRequestPromise.callCount).toEqual(1);
+        const firstArg = buildRequestPromise.getCall(0).args[0];
+        expect(firstArg).toBeAn(Object);
+        expect(firstArg).toIncludeKeys(['url', 'method']);
+      });
+
+      it('executes "buildRequestPromise" with passing the action as second argument', () => {
+        request(action, settings)(dispatch);
+        expect(buildRequestPromise.callCount).toEqual(1);
+        const secondArg = buildRequestPromise.getCall(0).args[1];
+        expect(secondArg).toEqual(action);
+      });
+
+      it('calls "onBeforeRequest" callback if it is given as middleware settings', () => {
+        request(action, settings)(dispatch);
+        expect(onBeforeRequest.callCount).toEqual(1);
+      });
     });
   });
 });

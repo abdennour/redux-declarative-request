@@ -1,6 +1,13 @@
 const url = require('url');
 const Errors = require('./errors');
 
+const defaultRequest = {
+  method: 'get',
+  query: {},
+  body: {},
+  options: {}
+};
+
 const middlewareDefaultSettings = {
   //  baseUrl: process.env.REACT_APP_API _URL,
   initialThen: response => response, // For fetch: can be needed: response.json()
@@ -82,15 +89,10 @@ function handleResponse(action, response, responseCode, hasError) {
 
 function request(action, settings) {
   let { type, ...request } = action;
-  request = Object.assign(
-    {
-      method: 'get',
-      query: {},
-      body: {},
-      options: {}
-    },
-    request
-  );
+  request = {
+    ...defaultRequest,
+    ...request
+  };
   return dispatch => {
     if (isFunction(settings.onBeforeRequest)) {
       settings.onBeforeRequest(dispatch);
