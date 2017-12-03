@@ -1,6 +1,18 @@
 const url = require('url');
 const Errors = require('./errors');
 
+const middlewareDefaultSettings = {
+  //  baseUrl: process.env.REACT_APP_API _URL,
+  initialThen: response => response, // For fetch: can be needed: response.json()
+  //onBeforeRequest: dispatch => {},
+  // onReceiveResponse: dispatch => {},
+  // onCompleteHandleResponse: dispatch => {},
+  buildRequestPromise: ({ url, method }, action) =>
+    Promise.reject(Errors.MISSING_REQUEST_BUILDER),
+  parseResponseCode: (error, response) =>
+    error ? error.response.status : response.status
+};
+
 function isLiteralObject(x) {
   return x && x.constructor === Object;
 }
@@ -33,24 +45,35 @@ function getResponseHandlersKeys(action, responseCode) {
   );
 }
 
-function requestCallback(action, response, responseCode, hasError) {
-  return settings => dispatch => {
-    if (isFunction(settings.onReceiveResponse)) {
-      settings.onReceiveResponse(dispatch);
-    }
-    const newAction = getResponseHandlersKeys(
-      action,
-      responseCode
-    ).reduce((all, handlerKey) => {
+function getAggregatedAction(action, response, responseCode) {
+  return getResponseHandlersKeys(action, responseCode).reduce(
+    (all, handlerKey) => {
       let subAction = action[handlerKey]; // can be only object or function according to filter of "getResponseHandlersKeys"
       if (isFunction(subAction)) {
         subAction = subAction(action, response); // if function is called , should return an action (literal object)
       } // else it is already object
-      return {
-        ...all,
-        ...subAction
-      };
-    }, {});
+      return isLiteralObject(subAction) ? { ...all, ...subAction } : all;
+    },
+    {}
+  );
+}
+
+function handleResponse(action, response, responseCode, hasError) {
+  return settings => dispatch => {
+    if (isFunction(settings.onReceiveResponse)) {
+      settings.onReceiveResponse(dispatch);
+    }
+    const aggregatedAction = getAggregatedActionFromResponseHandlers(
+      action,
+      response,
+      responseCode
+    );
+    dispatch({
+      ...aggregatedAction,
+      type: action.type,
+      hasError,
+      responseCode
+    });
     if (isFunction(settings.onCompleteHandleResponse)) {
       settings.onCompleteHandleResponse(dispatch);
     }
@@ -80,29 +103,24 @@ function request(action, settings) {
         },
         action
       )
+      .then(settings.initialThen)
       .then(response => {
         const responseCode = settings.parseResponseCode(false, response);
-        return requestCallback(action, response, responseCode, false)(dispatch);
+        return handleResponse(settings)(action, response, responseCode, false)(
+          dispatch
+        );
       })
       .catch(error => {
         const responseCode = settings.parseResponseCode(error);
-        return requestCallback(action, error, responseCode, true)(dispatch);
+        return handleResponse(settings)(action, error, responseCode, true)(
+          dispatch
+        );
       });
   };
 }
 
-function declarativeRequest(
-  settings = {
-    //  baseUrl: process.env.REACT_APP_API _URL,
-    //onBeforeRequest: dispatch => {},
-    // onReceiveResponse: dispatch => {},
-    // onCompleteHandleResponse: dispatch => {},
-    buildRequestPromise: ({ url, method }, action) =>
-      Promise.reject(Errors.MISSING_REQUEST_BUILDER),
-    parseResponseCode: (error, response) =>
-      error ? error.response.status : response.status
-  }
-) {
+function declarativeRequest(configuration) {
+  const settings = { ...middlewareDefaultSettings, ...configuration };
   return store => next => action => {
     if (isRequest(action, settings)) {
       return request(action, settings)(store.dispatch);
@@ -117,7 +135,8 @@ module.exports = {
   isRequest,
   getUrl,
   getResponseHandlersKeys,
-  requestCallback,
+  getAggregatedAction,
+  handleResponse,
   request,
   declarativeRequest
 };

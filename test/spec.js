@@ -7,7 +7,8 @@ import {
   isRequest,
   getUrl,
   getResponseHandlersKeys,
-  requestCallback,
+  getAggregatedAction,
+  handleResponse,
   request,
   declarativeRequest
 } from '../src';
@@ -17,6 +18,10 @@ const fakedAgent = {
     Promise[Date.now() % 2 ? 'resolve' : 'reject'](generateString())
 };
 describe(`redux-declarative-request`, () => {
+  let dispatch;
+  beforeEach(() => {
+    dispatch = sinon.spy();
+  });
   describe('isLiteralObject', () => {
     it('checks if variable is literal object', () => {
       let instance = {};
@@ -128,6 +133,78 @@ describe(`redux-declarative-request`, () => {
       let responseCode = 200;
       let callbacksNames = getResponseHandlersKeys(action, responseCode);
       expect(callbacksNames).toNotInclude('200');
+    });
+  });
+
+  describe('getAggregatedAction', () => {
+    let action, response, responseCode;
+    const action200 = { label200: generateString() };
+    const action404 = { label400: generateString() };
+    const action301 = { label301: generateString() };
+    const action301Or500 = { label301or500: generateString() };
+    beforeEach(() => {
+      responseCode = 200;
+      response = {};
+      action = {
+        type: generateString(),
+        '200': sinon.stub().returns(action200),
+        '404': sinon.stub().returns(action200),
+        '301': sinon.stub().returns(action301),
+        '301|500': sinon.stub().returns(action301Or500)
+      };
+    });
+
+    it('calls handler that its key matches the response code', () => {
+      responseCode = 200;
+      getAggregatedAction(action, response, responseCode);
+      expect(action['200'].callCount).toEqual(1);
+      responseCode = 301;
+      getAggregatedAction(action, response, responseCode);
+      expect(action['301'].callCount).toEqual(1);
+      expect(action['301|500'].callCount).toEqual(1);
+
+    });
+    it('combines all outputed actions from the matched handlers', () => {});
+  });
+
+  describe('handleResponse', () => {
+    let action,
+      response,
+      responseCode,
+      hasError,
+      settings,
+      buildRequestPromise,
+      onBeforeRequest,
+      onReceiveResponse,
+      onCompleteHandleResponse;
+    beforeEach(() => {
+      buildRequestPromise = sinon.spy();
+      onBeforeRequest = sinon.spy();
+      onReceiveResponse = sinon.spy();
+      onCompleteHandleResponse = sinon.spy();
+      action = { type: generateString(), uri: `/xa/${generateString()}` };
+      response = { status: 200, body: { abd: 'abc' } };
+      responseCode = response.status;
+      hasError = responseCode >= 400;
+      settings = {
+        baseUrl: `https://${generateString()}`,
+        buildRequestPromise,
+        onBeforeRequest,
+        onReceiveResponse,
+        onCompleteHandleResponse
+      };
+    });
+
+    it('is two-levels carried out function', () => {
+      const returnLevel1 = handleResponse(
+        action,
+        response,
+        responseCode,
+        hasError
+      );
+      expect(returnLevel1).toBeA(Function);
+      const returnLevel2 = returnLevel1(settings);
+      expect(returnLevel2).toBeA(Function);
     });
   });
 });
