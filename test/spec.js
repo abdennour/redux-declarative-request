@@ -107,17 +107,27 @@ describe(`redux-declarative-request`, () => {
         type: generateString(),
         '200': sinon.spy(),
         '404': sinon.spy(),
-        '200|204|406': sinon.spy()
+        '200|204|406': sinon.spy(),
+        '301': sinon.spy()
       };
     });
 
-    it('filters function callbacks from action that matches response status', () => {
-     let responseCode = 200;
-     const callbacks = getResponseHandlersKeys(action, 200);
-     expect(callbacks).toInclude('200');
-     expect(callbacks).toInclude('200|204|406');
-     expect(callbacks).toInclude('200|204|406');
+    it('retreives function callback names from action that matches response status', () => {
+      let responseCode = 200;
+      let callbacksNames = getResponseHandlersKeys(action, responseCode);
+      expect(callbacksNames).toInclude('200');
+      expect(callbacksNames).toInclude('200|204|406');
+      expect(callbacksNames).toInclude('200|204|406');
+      responseCode = 301;
+      callbacksNames = getResponseHandlersKeys(action, responseCode);
+      expect(callbacksNames).toInclude('301');
+    });
 
+    it('ignore non-functions even if the callback name matches the response code', () => {
+      action['200'] = 'I am not a function, i am string';
+      let responseCode = 200;
+      let callbacksNames = getResponseHandlersKeys(action, responseCode);
+      expect(callbacksNames).toNotInclude('200');
     });
   });
 });
