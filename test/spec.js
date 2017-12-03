@@ -17,6 +17,33 @@ const fakedAgent = {
   get: (url, params) =>
     Promise[Date.now() % 2 ? 'resolve' : 'reject'](generateString())
 };
+//  Builder of faked promises according to response code.
+function getHttpPromise(responseCode) {
+  const promise = {};
+  let promisedValue = { status: responseCode };
+
+  return () => {
+    promise.then = function(callback) {
+      if (
+        responseCode >= 200 &&
+        responseCode <= 399 &&
+        typeof callback === 'function'
+      ) {
+        promisedValue = callback(promisedValue);
+      }
+      return promise;
+    };
+    promise.catch = function(callback) {
+      if (responseCode >= 400 && typeof callback === 'function') {
+        promisedValue = callback(promisedValue);
+      }
+      return promise;
+    };
+
+    return promise;
+  };
+}
+
 describe(`redux-declarative-request`, () => {
   let dispatch;
   beforeEach(() => {
@@ -197,14 +224,16 @@ describe(`redux-declarative-request`, () => {
       onReceiveResponse,
       onCompleteHandleResponse;
     beforeEach(() => {
-      buildRequestPromise = sinon.stub().returns(Promise.resolve({}));
-      onBeforeRequest = sinon.spy();
-      onReceiveResponse = sinon.spy();
-      onCompleteHandleResponse = sinon.spy();
       action = { type: generateString(), uri: `/xa/${generateString()}` };
       response = { status: 200, body: { abd: 'abc' } };
       responseCode = response.status;
       hasError = responseCode >= 400;
+
+      buildRequestPromise = sinon.stub().returns(Promise.resolve(response));
+      onBeforeRequest = sinon.spy();
+      onReceiveResponse = sinon.spy();
+      onCompleteHandleResponse = sinon.spy();
+
       settings = {
         baseUrl: `https://${generateString()}`,
         buildRequestPromise,
@@ -280,6 +309,23 @@ describe(`redux-declarative-request`, () => {
         request(action, settings)(dispatch);
         expect(onBeforeRequest.callCount).toEqual(1);
       });
+
+      it('parse response code in then block', () => {
+        settings.buildRequestPromise = getHttpPromise(responseCode);
+        settings.parseResponseCode = sinon.stub().returns(response);
+        request(action, settings)(dispatch);
+        expect(settings.parseResponseCode.called).toBeTruthy();
+      });
+
+      it('parse response code in catch block', () => {
+        responseCode = 410;
+        response = { status: responseCode };
+        settings.buildRequestPromise = getHttpPromise(responseCode);
+        settings.parseResponseCode = sinon.stub().returns(response);
+        request(action, settings)(dispatch);
+        expect(settings.parseResponseCode.called).toBeTruthy();
+      });
+
     });
   });
 });
