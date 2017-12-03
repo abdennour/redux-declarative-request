@@ -138,10 +138,10 @@ describe(`redux-declarative-request`, () => {
 
   describe('getAggregatedAction', () => {
     let action, response, responseCode;
-    const action200 = { label200: generateString() };
-    const action404 = { label400: generateString() };
-    const action301 = { label301: generateString() };
-    const action301Or500 = { label301or500: generateString() };
+    const action200 = { label_200: generateString() };
+    const action404 = { label_400: generateString() };
+    const action301 = { label_301: generateString() };
+    const action301_or_500 = { label_301_or_500: generateString() };
     beforeEach(() => {
       responseCode = 200;
       response = {};
@@ -150,7 +150,7 @@ describe(`redux-declarative-request`, () => {
         '200': sinon.stub().returns(action200),
         '404': sinon.stub().returns(action200),
         '301': sinon.stub().returns(action301),
-        '301|500': sinon.stub().returns(action301Or500)
+        '301|500': sinon.stub().returns(action301_or_500)
       };
     });
 
@@ -162,9 +162,16 @@ describe(`redux-declarative-request`, () => {
       getAggregatedAction(action, response, responseCode);
       expect(action['301'].callCount).toEqual(1);
       expect(action['301|500'].callCount).toEqual(1);
-
     });
-    it('combines all outputed actions from the matched handlers', () => {});
+    it('returns & combines all outputed actions from the matched handlers', () => {
+      responseCode = 301;
+      const aggregatedAction = getAggregatedAction(
+        action,
+        response,
+        responseCode
+      );
+      expect(aggregatedAction).toEqual({ ...action301, ...action301_or_500 });
+    });
   });
 
   describe('handleResponse', () => {
