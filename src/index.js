@@ -11,7 +11,7 @@ exports.isFunction = function(x) {
 exports.isRequest = function(action, settings) {
   if (typeof action.uri === 'string' && !('baseUrl' in settings))
     throw new Error(Errors.MISSING_BASE_URL);
-  return typeof action.uri === 'string' || action.url === 'string';
+  return typeof action.uri === 'string' || typeof action.url === 'string';
 };
 
 exports.getUrl = function(action, baseUrl) {

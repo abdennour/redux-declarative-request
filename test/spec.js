@@ -1,11 +1,20 @@
-import 'jsdom-global/register';
 import expect from 'expect';
 import sinon from 'sinon';
-
-import { isLiteralObject, isFunction } from '../src';
+import { generate as generateString } from 'randomstring';
+import {
+  isLiteralObject,
+  isFunction,
+  isRequest,
+  getUrl,
+  getResponseHandlersFromAction,
+  requestCallback,
+  request,
+  declarativeRequest
+} from '../src';
 
 const fakedAgent = {
-  get: (url, params) => Promise[Date.now() % 2 ? 'resolve' : 'reject']('hi')
+  get: (url, params) =>
+    Promise[Date.now() % 2 ? 'resolve' : 'reject'](generateString())
 };
 describe(`redux-declarative-request`, () => {
   describe('isLiteralObject', () => {
@@ -46,6 +55,31 @@ describe(`redux-declarative-request`, () => {
         static someMethod() {}
       }
       expect(isFunction(SomeClass.someMethod)).toBeTruthy();
+    });
+  });
+
+  describe('isRequest', () => {
+    let action, settings;
+    beforeEach(() => {
+      action = { type: generateString() };
+      settings = { baseUrl: `https://${generateString()}` };
+    });
+
+    it('considers an action as an HTTP request if it includes "uri"', () => {
+      action.uri = `/${generateString()}/${generateString()}`;
+      expect(isRequest(action, settings)).toBeTruthy();
+    });
+
+    it('considers an action as an HTTP request if it includes "url"', () => {
+      action.url = `https://${generateString()}/${generateString()}?${generateString()}`;
+      expect(isRequest(action, settings)).toBeTruthy();
+    });
+    it('throws error if "uri" provided in the action without a baseUrl in the settings', () => {
+      action.uri = `https://${generateString()}/${generateString()}`;
+      delete settings.baseUrl;
+      expect(() => {
+        isRequest(action, settings);
+      }).toThrow();
     });
   });
 });

@@ -1,20 +1,17 @@
 {
   "name": "redux-declarative-request",
   "version": "0.0.1",
-  "description":
-    "Still under development. It is not yet mature. Thank you for your understanding!",
+  "description": "Still under development. It is not yet mature. Thank you for your understanding!",
   "main": "src/index.js",
   "scripts": {
     "cdn": "node cdn/generator.js",
     "prepublish": "npm run cdn",
     "start": "node server",
-    "test": "mocha --watch --require babel-register $(find  src test -name '*spec.js')",
-    "test:ci": "mocha --require babel-register $(find  src test -name '*spec.js')",
+    "test": "mocha --watch --require ./test/init.js --require babel-register $(find  src test -name '*spec.js')",
+    "test:ci": "mocha  --require ./test/init.js --require babel-register $(find  src test -name '*spec.js')",
     "coverage": "istanbul cover _mocha -- --ui bdd -R spec -t 5000;open ./coverage/lcov-report/index.html",
-    "cover":
-      "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha",
-    "coveralls":
-      "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
+    "cover": "node_modules/.bin/babel-node node_modules/.bin/babel-istanbul cover node_modules/.bin/_mocha",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls",
     "docgen": "documentation build  src/** -f html -o docs"
   },
   "repository": {
@@ -63,6 +60,7 @@
     "jsdom-global": "2.1.0",
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0",
+    "randomstring": "^1.1.5",
     "react": "^15.4.1",
     "react-addons-test-utils": "^15.4.1",
     "react-dom": "^15.4.1",
