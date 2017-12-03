@@ -1,48 +1,48 @@
 const url = require('url');
 const Errors = require('./errors');
 
-exports.isLiteralObject = function(x) {
-  return x && x.constructor === Object ;
-};
+function isLiteralObject(x) {
+  return x && x.constructor === Object;
+}
 
-exports.isFunction = function(x) {
+function isFunction(x) {
   return typeof x === 'function';
-};
+}
 
-exports.isRequest = function(action, settings) {
+function isRequest(action, settings) {
   if (typeof action.uri === 'string' && !('baseUrl' in settings))
     throw new Error(Errors.MISSING_BASE_URL);
   return typeof action.uri === 'string' || typeof action.url === 'string';
-};
+}
 
-exports.getUrl = function(action, baseUrl) {
-  return action.url ? action.url :  url.resolve(baseUrl, action.uri);
-};
+function getUrl(action, baseUrl) {
+  return action.url ? action.url : url.resolve(baseUrl, action.uri);
+}
 /**
  * if action={method:'post',...,'200': foo, '404|405': bar}
  * and if responseCode is 404,
  * this helper will return bar as its key matches response code
  * @type {[type]}
  */
-exports.getResponseHandlersFromAction = function(action, responseCode) {
+function getResponseHandlersKeys(action, responseCode) {
   return Object.keys(action).filter(
     handlerKey =>
       handlerKey.indexOf(String(responseCode)) >= 0 &&
       (isLiteralObject(action[String(responseCode)]) ||
         isFunction(action[String(responseCode)]))
   );
-};
+}
 
-exports.requestCallback = function(action, response, responseCode, hasError) {
+function requestCallback(action, response, responseCode, hasError) {
   return settings => dispatch => {
     if (isFunction(settings.onReceiveResponse)) {
       settings.onReceiveResponse(dispatch);
     }
-    const newAction = getResponseHandlersFromAction(
+    const newAction = getResponseHandlersKeys(
       action,
       responseCode
     ).reduce((all, handlerKey) => {
-      let subAction = action[handlerKey]; // can be only object or function according to filter of "getResponseHandlersFromAction"
+      let subAction = action[handlerKey]; // can be only object or function according to filter of "getResponseHandlersKeys"
       if (isFunction(subAction)) {
         subAction = subAction(action, response); // if function is called , should return an action (literal object)
       } // else it is already object
@@ -55,9 +55,9 @@ exports.requestCallback = function(action, response, responseCode, hasError) {
       settings.onCompleteHandleResponse(dispatch);
     }
   };
-};
+}
 
-exports.request = function(action, settings) {
+function request(action, settings) {
   let { type, ...request } = action;
   request = Object.assign(
     {
@@ -89,9 +89,9 @@ exports.request = function(action, settings) {
         return requestCallback(action, error, responseCode, true)(dispatch);
       });
   };
-};
+}
 
-exports.declarativeRequest = function(
+function declarativeRequest(
   settings = {
     //  baseUrl: process.env.REACT_APP_API _URL,
     //onBeforeRequest: dispatch => {},
@@ -109,4 +109,15 @@ exports.declarativeRequest = function(
     }
     next(action);
   };
+}
+
+module.exports = {
+  isLiteralObject,
+  isFunction,
+  isRequest,
+  getUrl,
+  getResponseHandlersKeys,
+  requestCallback,
+  request,
+  declarativeRequest
 };

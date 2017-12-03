@@ -6,7 +6,7 @@ import {
   isFunction,
   isRequest,
   getUrl,
-  getResponseHandlersFromAction,
+  getResponseHandlersKeys,
   requestCallback,
   request,
   declarativeRequest
@@ -83,20 +83,41 @@ describe(`redux-declarative-request`, () => {
     });
   });
 
-   describe('getUrl', () => {
-     let action, baseUrl;
-     beforeEach(() => {
-       action = { type: generateString() };
-       baseUrl= `https://${generateString()}`
-     });
-     it('builds a full url from "uri" (in action) and "baseUrl"', () => {
-        action.uri = 'hi';
-        baseUrl = 'http://ho.co';
-        expect(getUrl(action, baseUrl)).toEqual('http://ho.co/hi');
-      });
-     it('does not build anything if the "url" is already given ', () => {
-       action.url = `ftp://${generateString()}/${generateString()}`;
-       expect(getUrl(action)).toEqual(action.url);
-     })
-   })
+  describe('getUrl', () => {
+    let action, baseUrl;
+    beforeEach(() => {
+      action = { type: generateString() };
+      baseUrl = `https://${generateString()}`;
+    });
+    it('builds a full url from "uri" (in action) and "baseUrl"', () => {
+      action.uri = 'hi';
+      baseUrl = 'http://ho.co';
+      expect(getUrl(action, baseUrl)).toEqual('http://ho.co/hi');
+    });
+    it('does not build anything if the "url" is already given ', () => {
+      action.url = `ftp://${generateString()}/${generateString()}`;
+      expect(getUrl(action)).toEqual(action.url);
+    });
+  });
+
+  describe('getResponseHandlersKeys', () => {
+    let action;
+    beforeEach(() => {
+      action = {
+        type: generateString(),
+        '200': sinon.spy(),
+        '404': sinon.spy(),
+        '200|204|406': sinon.spy()
+      };
+    });
+
+    it('filters function callbacks from action that matches response status', () => {
+     let responseCode = 200;
+     const callbacks = getResponseHandlersKeys(action, 200);
+     expect(callbacks).toInclude('200');
+     expect(callbacks).toInclude('200|204|406');
+     expect(callbacks).toInclude('200|204|406');
+
+    });
+  });
 });
