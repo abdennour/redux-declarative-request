@@ -63,7 +63,7 @@ function handleResponse(action, response, responseCode, hasError) {
     if (isFunction(settings.onReceiveResponse)) {
       settings.onReceiveResponse(dispatch);
     }
-    const aggregatedAction = getAggregatedActionFromResponseHandlers(
+    const aggregatedAction = getAggregatedAction(
       action,
       response,
       responseCode

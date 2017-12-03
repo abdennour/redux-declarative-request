@@ -163,6 +163,12 @@ describe(`redux-declarative-request`, () => {
       expect(action['301'].callCount).toEqual(1);
       expect(action['301|500'].callCount).toEqual(1);
     });
+
+    it('returns a literal object', () => {
+      expect(
+        isLiteralObject(getAggregatedAction(action, response, responseCode))
+      ).toBeTruthy();
+    });
     it('returns & combines all outputed actions from the matched handlers', () => {
       responseCode = 301;
       const aggregatedAction = getAggregatedAction(
@@ -212,6 +218,34 @@ describe(`redux-declarative-request`, () => {
       expect(returnLevel1).toBeA(Function);
       const returnLevel2 = returnLevel1(settings);
       expect(returnLevel2).toBeA(Function);
+    });
+
+    it('dispatches the aggregated/final action', () => {
+      delete settings.onReceiveResponse; // to make sure that "dispatch" is called only for this case
+      delete settings.onCompleteHandleResponse; // same as above
+      handleResponse(action, response, responseCode, hasError)(settings)(
+        dispatch
+      );
+      expect(dispatch.callCount).toEqual(1);
+      const dispatchFirstArg = dispatch.getCall(0).args[0];
+      expect(dispatchFirstArg).toBeAn(Object);
+      expect(dispatchFirstArg.type).toEqual(action.type);
+      expect(dispatchFirstArg.hasError).toEqual(hasError);
+      expect(dispatchFirstArg.responseCode).toEqual(responseCode);
+    });
+
+    it('calls "onReceiveResponse" callback if it is given as middleware settings', () => {
+      handleResponse(action, response, responseCode, hasError)(settings)(
+        dispatch
+      );
+      expect(onReceiveResponse.callCount).toEqual(1);
+    });
+
+    it('calls "onCompleteHandleResponse" callback if it is given as middleware settings', () => {
+      handleResponse(action, response, responseCode, hasError)(settings)(
+        dispatch
+      );
+      expect(onCompleteHandleResponse.callCount).toEqual(1);
     });
   });
 });
