@@ -10,13 +10,13 @@ const defaultRequest = {
 
 const middlewareDefaultSettings = {
   //  baseUrl: process.env.REACT_APP_API _URL,
-  initialThen: response => response, // For fetch: can be needed: response.json()
+  initialThen: (response, action) => response, // For fetch: can be needed: response.json()
   //onBeforeRequest: dispatch => {},
   // onReceiveResponse: dispatch => {},
   // onCompleteHandleResponse: dispatch => {},
   buildRequestPromise: ({ url, method }, action) =>
     Promise.reject(Errors.MISSING_REQUEST_BUILDER),
-  parseResponseCode: (error, response) =>
+  parseResponseCode: (error, response, action) =>
     error ? error.response.status : response.status
 };
 
@@ -105,15 +105,15 @@ export function request(action, settings) {
         },
         action
       )
-      .then(settings.initialThen)
+      .then((response) => settings.initialThen(response, action))
       .then(response => {
-        const responseCode = settings.parseResponseCode(false, response);
+        const responseCode = settings.parseResponseCode(false, response, action);
         return handleResponse(settings)(action, response, responseCode, false)(
           dispatch
         );
       })
       .catch(error => {
-        const responseCode = settings.parseResponseCode(error);
+        const responseCode = settings.parseResponseCode(error, null, action);
         return handleResponse(settings)(action, error, responseCode, true)(
           dispatch
         );

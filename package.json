@@ -1,7 +1,7 @@
 {
   "name": "redux-declarative-request",
-  "version": "0.0.1",
-  "description": "Still under development. It is not yet mature. Thank you for your understanding!",
+  "version": "0.0.2",
+  "description": "Making Promised requests following declarative programming paradigm leveraging redux actions structure",
   "main": "lib/index.js",
   "scripts": {
     "compile": "babel -d lib/ src/ --no-comments",
@@ -66,6 +66,7 @@
     "react": "^15.4.1",
     "react-addons-test-utils": "^15.4.1",
     "react-dom": "^15.4.1",
+    "redux-test-utils": "^0.2.2",
     "sass-loader": "^4.0.2",
     "sinon": "^1.17.6",
     "style-loader": "^0.13.1",

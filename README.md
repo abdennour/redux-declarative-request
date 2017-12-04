@@ -3,7 +3,7 @@
 
 # Overview :
 
-Still under development. It is not yet mature. Thank you for your understanding!
+Making Promised requests following declarative programming paradigm leveraging redux actions structure
 
 # Install
 
@@ -14,8 +14,27 @@ npm install redux-declarative-request --save;
 # Example :
 
 ```js
+import { declarativeRequest } from 'redux-declarative-request';
 
+const requestMiddleware = declarativeRequest({
+  baseUrl: 'https://api.example.com/xx',
+  initialThen: response => response, // response.json()
+  //onBeforeRequest: dispatch => {},
+  // onReceiveResponse: dispatch => {},
+  // onCompleteHandleResponse: dispatch => {},
+  buildRequestPromise: ({ url, method }, action) =>
+    Promise.reject(Errors.MISSING_REQUEST_BUILDER),
+  parseResponseCode: (error, response, action) =>
+    error ? error.response.status : response.status
+})
+
+
+const store = createStore(reducers, requestMiddleware);
 ```
+
+Ready implementation for some http agents are available under package pattern : `redux-declarative-request-[REQUEST-ARGENT]`.
+
+.i.e: `redux-declarative-request-axios`
 
 # License:
 

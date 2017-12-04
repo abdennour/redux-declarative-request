@@ -1,6 +1,7 @@
 import expect from 'expect';
 import sinon from 'sinon';
 import { generate as generateString } from 'randomstring';
+import { createMockStore } from 'redux-test-utils';
 import {
   isLiteralObject,
   isFunction,
@@ -12,7 +13,6 @@ import {
   request,
   declarativeRequest
 } from '../lib';
-
 
 //  Builder of faked promises according to response code.
 function getHttpPromise(responseCode) {
@@ -217,6 +217,7 @@ describe(`redux-declarative-request`, () => {
       hasError,
       settings,
       buildRequestPromise,
+      initialThen,
       onBeforeRequest,
       onReceiveResponse,
       onCompleteHandleResponse;
@@ -227,12 +228,14 @@ describe(`redux-declarative-request`, () => {
       hasError = responseCode >= 400;
 
       buildRequestPromise = sinon.stub().returns(Promise.resolve(response));
+      initialThen = sinon.stub().returns(Promise.resolve(response));
       onBeforeRequest = sinon.spy();
       onReceiveResponse = sinon.spy();
       onCompleteHandleResponse = sinon.spy();
 
       settings = {
         baseUrl: `https://${generateString()}`,
+        initialThen,
         buildRequestPromise,
         onBeforeRequest,
         onReceiveResponse,
@@ -307,14 +310,14 @@ describe(`redux-declarative-request`, () => {
         expect(onBeforeRequest.callCount).toEqual(1);
       });
 
-      it('parse response code in then block', () => {
+      it('parses response code in then block', () => {
         settings.buildRequestPromise = getHttpPromise(responseCode);
         settings.parseResponseCode = sinon.stub().returns(response);
         request(action, settings)(dispatch);
         expect(settings.parseResponseCode.called).toBeTruthy();
       });
 
-      it('parse response code in catch block', () => {
+      it('parses response code in catch block', () => {
         responseCode = 410;
         response = { status: responseCode };
         settings.buildRequestPromise = getHttpPromise(responseCode);
@@ -323,6 +326,42 @@ describe(`redux-declarative-request`, () => {
         expect(settings.parseResponseCode.called).toBeTruthy();
       });
 
+      it('enables parsing response according to action', () => {
+        settings.buildRequestPromise = getHttpPromise(responseCode);
+        settings.parseResponseCode = sinon.stub().returns(response);
+        request(action, settings)(dispatch);
+        // since action is given as 3rd argument, you can parse the response according action values/keys
+        expect(settings.parseResponseCode.getCall(0).args[2]).toEqual(action);
+      });
+    });
+    describe('declarativeRequest', () => {
+      let store, next;
+      beforeEach(() => {
+        store = createMockStore();
+        next = sinon.spy();
+      });
+
+      it('generates redux middleware', () => {
+        const middleware = declarativeRequest(settings);
+        expect(middleware).toBeA(Function);
+        expect(middleware(store)(next)).toBeA(Function);
+      });
+
+      it('blocks the dispatch if the action is a request', () => {
+        expect(action.uri).toBeA('string');
+        expect(settings.baseUrl).toBeA('string');
+        const middleware = declarativeRequest(settings);
+        middleware(store)(next)(action);
+        expect(next.called).toBeFalsy();
+      });
+
+      it('ignores the dispatch if the action is not a request', () => {
+        delete action.uri;
+        delete action.url;
+        const middleware = declarativeRequest(settings);
+        middleware(store)(next)(action);
+        expect(next.called).toBeTruthy();
+      });
     });
   });
 });
