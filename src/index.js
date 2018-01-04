@@ -35,7 +35,10 @@ export function isRequest(action, settings) {
 }
 
 export function getUrl(action, baseUrl) {
-  return action.url ? action.url : url.resolve(baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`, action.uri);
+  if (action.url) return action.url;
+  const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const uri = action.uri.startsWith('/') ? action.uri.slice(1) : action.uri;
+  return `${base}/${uri}`;
 }
 /**
  * if action={method:'post',...,'200': foo, '404|405': bar}
@@ -97,6 +100,8 @@ export function request(action, settings) {
     if (isFunction(settings.onBeforeRequest)) {
       settings.onBeforeRequest(dispatch);
     }
+    let responseCode;
+
     settings
       .buildRequestPromise(
         {
@@ -105,15 +110,21 @@ export function request(action, settings) {
         },
         action
       )
-      .then((response) => settings.initialThen(response, action))
       .then(response => {
-        const responseCode = settings.parseResponseCode(false, response, action);
+        responseCode = settings.parseResponseCode(
+          false,
+          response,
+          action
+        );
+        return settings.initialThen(response, action);
+      })
+      .then(response => {
         return handleResponse(action, response, responseCode, false)(settings)(
           dispatch
         );
       })
       .catch(error => {
-        const responseCode = settings.parseResponseCode(error, null, action);
+        responseCode = settings.parseResponseCode(error, null, action);
         return handleResponse(action, error, responseCode, true)(settings)(
           dispatch
         );
