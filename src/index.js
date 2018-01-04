@@ -132,6 +132,15 @@ export function request(action, settings) {
   };
 }
 
+// Useful in "settings.buildRequestPromise"
+// it removes all callbacks from a literal objects
+export function omitCallbacks(action) {
+  return Object.keys(action).filter(k => typeof action[k] !== 'function').reduce(
+    (newAction, k) => ({ ...newAction, [k]: action[k] }),
+    {}
+  );
+}
+
 export function declarativeRequest(configuration) {
   const settings = { ...middlewareDefaultSettings, ...configuration };
   return store => next => action => {
