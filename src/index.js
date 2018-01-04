@@ -35,7 +35,7 @@ export function isRequest(action, settings) {
 }
 
 export function getUrl(action, baseUrl) {
-  return action.url ? action.url : url.resolve(baseUrl, action.uri);
+  return action.url ? action.url : url.resolve(baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`, action.uri);
 }
 /**
  * if action={method:'post',...,'200': foo, '404|405': bar}
@@ -108,13 +108,13 @@ export function request(action, settings) {
       .then((response) => settings.initialThen(response, action))
       .then(response => {
         const responseCode = settings.parseResponseCode(false, response, action);
-        return handleResponse(settings)(action, response, responseCode, false)(
+        return handleResponse(action, response, responseCode, false)(settings)(
           dispatch
         );
       })
       .catch(error => {
         const responseCode = settings.parseResponseCode(error, null, action);
-        return handleResponse(settings)(action, error, responseCode, true)(
+        return handleResponse(action, error, responseCode, true)(settings)(
           dispatch
         );
       });

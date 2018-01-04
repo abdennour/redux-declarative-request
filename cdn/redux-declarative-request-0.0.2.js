@@ -83,7 +83,7 @@ function isRequest(action, settings) {
 }
 
 function getUrl(action, baseUrl) {
-  return action.url ? action.url : _url2.default.resolve(baseUrl.endsWith('/') ? baseUrl : baseUrl + '/', action.uri);
+  return action.url ? action.url : _url2.default.resolve(baseUrl, action.uri);
 }
 function getResponseHandlersKeys(action, responseCode) {
   return Object.keys(action).filter(function (handlerKey) {
@@ -136,10 +136,10 @@ function request(action, settings) {
       return settings.initialThen(response, action);
     }).then(function (response) {
       var responseCode = settings.parseResponseCode(false, response, action);
-      return handleResponse(action, response, responseCode, false)(settings)(dispatch);
+      return handleResponse(settings)(action, response, responseCode, false)(dispatch);
     }).catch(function (error) {
       var responseCode = settings.parseResponseCode(error, null, action);
-      return handleResponse(action, error, responseCode, true)(settings)(dispatch);
+      return handleResponse(settings)(action, error, responseCode, true)(dispatch);
     });
   };
 }
