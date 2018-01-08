@@ -71,7 +71,7 @@ export function getAggregatedAction(action, response, responseCode) {
 export function handleResponse(action, response, responseCode, hasError) {
   return settings => dispatch => {
     if (isFunction(settings.onReceiveResponse)) {
-      settings.onReceiveResponse(dispatch);
+      settings.onReceiveResponse(dispatch, action);
     }
     const aggregatedAction = getAggregatedAction(
       action,
@@ -85,7 +85,7 @@ export function handleResponse(action, response, responseCode, hasError) {
       responseCode
     });
     if (isFunction(settings.onCompleteHandleResponse)) {
-      settings.onCompleteHandleResponse(dispatch);
+      settings.onCompleteHandleResponse(dispatch, action);
     }
   };
 }
@@ -98,7 +98,7 @@ export function request(action, settings) {
   };
   return dispatch => {
     if (isFunction(settings.onBeforeRequest)) {
-      settings.onBeforeRequest(dispatch);
+      settings.onBeforeRequest(dispatch, action);
     }
     let responseCode;
 
