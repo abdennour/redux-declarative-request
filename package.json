@@ -1,6 +1,6 @@
 {
   "name": "redux-declarative-request",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Making Promised requests following declarative programming paradigm leveraging redux actions structure",
   "main": "lib/index.js",
   "scripts": {

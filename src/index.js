@@ -73,17 +73,24 @@ export function handleResponse(action, response, responseCode, hasError) {
     if (isFunction(settings.onReceiveResponse)) {
       settings.onReceiveResponse(dispatch, action);
     }
-    const aggregatedAction = getAggregatedAction(
+    const aggregatedActions = getAggregatedAction(
       action,
       response,
       responseCode
     );
-    dispatch({
-      ...aggregatedAction,
+
+    const responseAction = {
+      ...omitCallbacks(action),
+      ...aggregatedActions,
       type: action.type,
       hasError,
       responseCode
-    });
+    };
+    delete responseAction.url;
+    delete responseAction.uri;
+
+    dispatch(responseAction);
+
     if (isFunction(settings.onCompleteHandleResponse)) {
       settings.onCompleteHandleResponse(dispatch, action);
     }
