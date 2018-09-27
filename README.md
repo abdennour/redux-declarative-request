@@ -32,6 +32,24 @@ const requestMiddleware = declarativeRequest({
 const store = createStore(reducers, requestMiddleware);
 ```
 
+Your **action** will be declarative and it will look like: 
+
+```js
+export function getUsers() {
+
+  return {
+    type: ActionTypes.FETCH_USERS,
+    uri: `/users`,
+    method: 'get',
+    '200': (request, response) => ({ users: response }),
+    '404': (request, response) => ({ message: 'Not found', level: 'error' }), // Build your middleware to listen to notifications
+    '410': () => ({ message: 'service not available', level: 'error' }) 
+  };
+}
+```
+
+
+
 Ready implementation for some http agents are available under package pattern : `redux-declarative-request-[REQUEST-ARGENT]`.
 
 .i.e: `redux-declarative-request-axios`
